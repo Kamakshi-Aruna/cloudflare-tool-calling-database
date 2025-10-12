@@ -1,23 +1,78 @@
-/**
- * Cloudflare Workers AI - Tool Calling Demo
- *
- * This worker demonstrates AI function calling with:
- * - searchKnowledgeBase: Search company knowledge base
- * - getActiveUsers: Get active users from database
- *
- * Example queries:
- * - "Show me the list of active users" -> Calls getActiveUsers
- * - "What's our vacation policy?" -> Calls searchKnowledgeBase
- */
-
 import { runWithTools } from './runWithTools';
-import { handleProcessRequest } from './process-docs';
 
 export interface Env {
-  AI: any; // Cloudflare AI binding
-  DB: any; // D1 database binding
-  DOCUMENTS: R2Bucket; // R2 storage for documents
-  VECTORIZE: VectorizeIndex; // Vectorize for semantic search
+  AI: any;
+  DB: any;
+  DOCUMENTS: R2Bucket;
+  VECTORIZE: VectorizeIndex;
+}
+
+function splitIntoChunks(text: string, chunkSize: number = 500): string[] {
+  const chunks: string[] = [];
+  const cleanText = text.replace(/\r\n/g, '\n').trim();
+  const paragraphs = cleanText.split('\n\n');
+  let currentChunk = '';
+
+  for (const paragraph of paragraphs) {
+    if (currentChunk.length + paragraph.length > chunkSize && currentChunk.length > 0) {
+      chunks.push(currentChunk.trim());
+      currentChunk = paragraph;
+    } else {
+      currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+    }
+  }
+
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
+  }
+
+  return chunks;
+}
+
+async function processDocuments(env: Env) {
+  const stats = { processed: 0, chunks: 0, errors: [] as string[] };
+
+  const list = await env.DOCUMENTS.list();
+  if (list.objects.length === 0) return stats;
+
+  for (const object of list.objects) {
+    try {
+      const file = await env.DOCUMENTS.get(object.key);
+      if (!file) continue;
+
+      const text = await file.text();
+      const chunks = splitIntoChunks(text, 500);
+
+      for (let i = 0; i < chunks.length; i++) {
+        try {
+          const embedding = await env.AI.run('@cf/baai/bge-base-en-v1.5', { text: chunks[i] });
+          const truncatedText = chunks[i].length > 1000 ? chunks[i].substring(0, 1000) + '...' : chunks[i];
+
+          await env.VECTORIZE.upsert([{
+            id: `${object.key}-chunk-${i}`,
+            values: embedding.data[0],
+            metadata: {
+              source: object.key,
+              text: truncatedText,
+              chunkIndex: i,
+              totalChunks: chunks.length,
+              processedAt: new Date().toISOString()
+            }
+          }]);
+
+          stats.chunks++;
+        } catch (error) {
+          stats.errors.push(`Failed chunk ${i} of ${object.key}: ${error instanceof Error ? error.message : 'Unknown'}`);
+        }
+      }
+
+      stats.processed++;
+    } catch (error) {
+      stats.errors.push(`Failed ${object.key}: ${error instanceof Error ? error.message : 'Unknown'}`);
+    }
+  }
+
+  return stats;
 }
 
 /**
@@ -129,7 +184,14 @@ export default {
 
       // Special endpoint: Process documents and create embeddings
       if (url.pathname === '/process-docs') {
-        return await handleProcessRequest(env);
+        const stats = await processDocuments(env);
+        return new Response(JSON.stringify({
+          success: stats.errors.length === 0,
+          message: 'Document processing complete',
+          stats: stats
+        }, null, 2), {
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
 
       // Get query from request
@@ -154,14 +216,11 @@ export default {
         tools: [
           {
             name: "searchKnowledgeBase",
-            description: "Search the company knowledge base for policies, procedures, benefits, and company information. Use this when users ask about company policies, vacation, remote work, benefits, expenses, etc.",
+            description: "Search knowledge base",
             parameters: {
               type: "object",
               properties: {
-                query: {
-                  type: "string",
-                  description: "The search query (e.g., 'vacation policy', 'remote work', 'benefits')"
-                }
+                query: { type: "string" }
               },
               required: ["query"]
             },
@@ -169,18 +228,12 @@ export default {
           },
           {
             name: "getActiveUsers",
-            description: "Get a list of active users/employees. Use this when users ask about team members, active users, employee lists, etc.",
+            description: "Get active users",
             parameters: {
               type: "object",
               properties: {
-                limit: {
-                  type: "number",
-                  description: "Maximum number of users to return (default: 10)"
-                },
-                department: {
-                  type: "string",
-                  description: "Filter by department (e.g., 'Engineering', 'Design', 'Marketing')"
-                }
+                limit: { type: "number" },
+                department: { type: "string" }
               },
               required: []
             },
