@@ -1,0 +1,20 @@
+{
+  // Cloudflare Workers configuration (JSON with Comments format)
+  "name": "cloudflare-ai-toolcalling",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2024-01-01",
+
+  // Workers AI binding
+  "ai": {
+    "binding": "AI"
+  },
+
+  // D1 Database binding
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tool-database",
+      "database_id": "fa058509-008a-4a16-801b-74222f523d25"
+    }
+  ]
+}
