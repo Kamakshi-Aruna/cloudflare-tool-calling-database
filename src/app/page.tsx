@@ -19,9 +19,8 @@ export default function Home() {
   const exampleQueries = [
     { label: 'Show active users', query: 'Show me the list of active users' },
     { label: 'Engineering team', query: 'List all active users in Engineering department' },
-    { label: 'Vacation policy', query: 'What is our vacation policy?' },
-    { label: 'Remote work', query: 'Tell me about our remote work policy' },
-    { label: 'Benefits info', query: 'What benefits do we offer?' },
+    { label: 'About java', query: 'What is our java?' },
+    { label: 'About Css', query: 'What is css??' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,23 +63,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Worker URL Configuration */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
-          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-            Worker URL:
-          </label>
-          <input
-            type="text"
-            value={workerUrl}
-            onChange={(e) => setWorkerUrl(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            placeholder="http://localhost:8787"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Start Worker: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">npm run worker:dev</code>
-          </p>
-        </div>
-
         {/* Example Queries */}
         <div className="mb-6">
           <p className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">Try these examples:</p>
@@ -108,7 +90,7 @@ export default function Home() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="e.g., Show me active users or What's our vacation policy?"
+                placeholder="Search..."
                 className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 disabled={loading}
               />
