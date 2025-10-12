@@ -11,50 +11,59 @@
  */
 
 import { runWithTools } from './runWithTools';
+import { handleProcessRequest } from './process-docs';
 
 export interface Env {
   AI: any; // Cloudflare AI binding
   DB: any; // D1 database binding
+  DOCUMENTS: R2Bucket; // R2 storage for documents
+  VECTORIZE: VectorizeIndex; // Vectorize for semantic search
 }
 
-// Dummy knowledge base (replace with actual Vectorize/AI Search in production)
-const knowledgeBase = {
-  "vacation policy": "Employees get 20 days of paid vacation per year, plus 10 sick days. Vacation must be approved 2 weeks in advance.",
-  "remote work": "We support hybrid work with 2 days in office per week. Fully remote available for approved cases.",
-  "benefits": "We offer health insurance, 401k matching up to 6%, gym membership, and education stipend of $2000/year.",
-  "office hours": "Core hours are 10am-3pm. Flexible schedule otherwise. No strict 9-5 requirement.",
-  "expense policy": "Submit expenses via Expensify. Meals up to $50/day when traveling. Equipment approved case by case.",
-};
-
-
 /**
- * Search the company knowledge base
+ * Search the company knowledge base using Vectorize semantic search
  */
-async function searchKnowledgeBase({ query }: { query: string }): Promise<any> {
+async function searchKnowledgeBase({ query }: { query: string }, env?: Env): Promise<any> {
   console.log(`Searching knowledge base for: ${query}`);
 
-  // Simple keyword matching (replace with Vectorize or AI Search in production)
-  const queryLower = query.toLowerCase();
-  const results = [];
-
-  for (const [topic, content] of Object.entries(knowledgeBase)) {
-    if (queryLower.includes(topic) || topic.includes(queryLower)) {
-      results.push({ topic, content });
-    }
-  }
-
-  if (results.length === 0) {
-    // Fallback: return all topics if no match
+  if (!env?.VECTORIZE) {
+    console.error('Vectorize not configured');
     return {
       found: false,
-      message: "No exact matches found. Here are available topics:",
-      topics: Object.keys(knowledgeBase),
+      message: "Knowledge base not configured. Please run setup-rag.sh to create the Vectorize index and upload documents."
     };
   }
 
+  // Generate embedding for the query using Cloudflare AI
+  console.log('Generating embedding for query...');
+  const queryEmbedding = await env.AI.run('@cf/baai/bge-base-en-v1.5', {
+    text: query
+  });
+
+  // Search Vectorize for similar content
+  console.log('Searching Vectorize index...');
+  const results = await env.VECTORIZE.query(queryEmbedding.data[0], {
+    topK: 3,  // Get top 3 most relevant chunks
+    returnMetadata: true
+  });
+
+  if (results.matches.length === 0) {
+    return {
+      found: false,
+      message: "No relevant information found in the knowledge base. Please upload documents to R2 and process them first."
+    };
+  }
+
+  // Return the relevant chunks with source attribution
+  console.log(`Found ${results.matches.length} relevant chunks`);
   return {
     found: true,
-    results: results,
+    results: results.matches.map(match => ({
+      source: match.metadata?.source || 'unknown',
+      content: match.metadata?.text || '',
+      score: match.score,
+      chunkIndex: match.metadata?.chunkIndex
+    }))
   };
 }
 
@@ -116,8 +125,14 @@ export default {
     }
 
     try {
-      // Get query from request
       const url = new URL(request.url);
+
+      // Special endpoint: Process documents and create embeddings
+      if (url.pathname === '/process-docs') {
+        return await handleProcessRequest(env);
+      }
+
+      // Get query from request
       let userQuery: string;
 
       if (request.method === 'POST') {
@@ -129,28 +144,11 @@ export default {
 
       console.log(`Processing query: ${userQuery}`);
 
-      // Choose your favorite LLM - these models support function calling:
-      // - @cf/meta/llama-3.1-8b-instruct (fast, good for simple tasks)
-      // - @cf/meta/llama-3.1-70b-instruct (more capable)
-      // - @hf/nousresearch/hermes-2-pro-mistral-7b (good function calling)
       const model = "@cf/meta/llama-3.1-8b-instruct";
-
-      // System prompt that guides the AI on when to use which tool
-      const systemPrompt = `You are a helpful company assistant. You have access to these tools:
-1. searchKnowledgeBase - Search company policies, benefits, procedures
-2. getActiveUsers - Get active employee information
-
-Instructions:
-- When user asks about users/employees → call getActiveUsers ONCE
-- When user asks about policies/benefits → call searchKnowledgeBase ONCE
-- After calling tools and receiving results → immediately provide a natural language response
-- DO NOT call the same tool multiple times
-- Synthesize the tool results into a clear, helpful answer for the user`;
 
       // Run AI with tool calling
       const response = await runWithTools(env.AI, model, {
         messages: [
-          { role: "system", content: systemPrompt },
           { role: "user", content: userQuery }
         ],
         tools: [
@@ -167,7 +165,7 @@ Instructions:
               },
               required: ["query"]
             },
-            function: searchKnowledgeBase
+            function: async (args) => searchKnowledgeBase(args, env)
           },
           {
             name: "getActiveUsers",
