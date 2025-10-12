@@ -19,8 +19,8 @@ export default function Home() {
   const exampleQueries = [
     { label: 'Show active users', query: 'Show me the list of active users' },
     { label: 'Engineering team', query: 'List all active users in Engineering department' },
-    { label: 'About java', query: 'What is our java?' },
-    { label: 'About Css', query: 'What is css??' },
+    { label: 'About JAVA', query: 'What is our java?' },
+    { label: 'About CSS', query: 'What is CSS?' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +32,7 @@ export default function Home() {
 
     try {
       const response = await fetch(`${workerUrl}?query=${encodeURIComponent(query)}`);
-      const data = await response.json();
+      const data: AIResponse = await response.json();
       setResult(data);
     } catch (error) {
       setResult({
@@ -58,26 +58,8 @@ export default function Home() {
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
             Cloudflare Workers AI
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Tool Calling Demo - Ask about users or company policies
-          </p>
         </div>
 
-        {/* Example Queries */}
-        <div className="mb-6">
-          <p className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">Try these examples:</p>
-          <div className="flex flex-wrap gap-2">
-            {exampleQueries.map((example, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleExampleClick(example.query)}
-                className="px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                {example.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Query Form */}
         <form onSubmit={handleSubmit} className="mb-6">
@@ -104,6 +86,22 @@ export default function Home() {
             </div>
           </div>
         </form>
+
+          {/* Example Queries */}
+          <div className="mb-6">
+              <div className="flex flex-wrap gap-5">
+                  {exampleQueries.map((example, idx) => (
+                      <button
+                          key={idx}
+                          onClick={() => handleExampleClick(example.query)}
+                          className="px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                          {example.label}
+                      </button>
+                  ))}
+              </div>
+          </div>
+
 
         {/* Loading State */}
         {loading && (
