@@ -164,7 +164,7 @@ export default function Home() {
           <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800 dark:text-blue-400">
             <li>AI analyzes your query and decides which tool to use</li>
             <li>User queries → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">getActiveUsers</code></li>
-            <li>Policy questions → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">searchKnowledgeBase</code></li>
+            <li>Document questions → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">searchKnowledgeBase</code> (searches R2 documents via Vectorize)</li>
             <li>Tool executes and returns data to AI</li>
             <li>AI generates natural language response</li>
           </ol>
