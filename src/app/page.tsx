@@ -171,7 +171,6 @@ export default function Home() {
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
           <p>Built with Cloudflare Workers AI + Next.js</p>
-          <p className="mt-1">Check <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">WORKER_README.md</code> for setup instructions</p>
         </div>
       </div>
     </div>
