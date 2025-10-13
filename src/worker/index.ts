@@ -304,7 +304,7 @@ export default {
         tools: [
           {
             name: "getCurrentWeather",
-            description: "Gets real-time weather data for a city. Use ONLY when user asks about: weather, temperature, climate, rain, sun, wind, humidity, forecast, or atmospheric conditions in any location.",
+            description: "Gets real-time weather data",
             parameters: {
               type: "object",
               properties: {

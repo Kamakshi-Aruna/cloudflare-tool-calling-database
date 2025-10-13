@@ -1,46 +1,37 @@
 {
-  // Cloudflare Workers configuration (JSON with Comments format)
-  "name": "cloudflare-ai-toolcalling",
-  "main": "src/worker/index.ts",
-  "compatibility_date": "2024-01-01",
+	// Cloudflare Workers configuration (JSON with Comments format)
+	"name": "cloudflare-ai-toolcalling",
+	"main": "src/worker/index.ts",
+	"compatibility_date": "2024-01-01",
+	// Workers AI binding
+	"ai": {
+		"binding": "AI"
+	},
+	// D1 Database binding
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "tool-database",
+			"database_id": "fa058509-008a-4a16-801b-74222f523d25"
+		}
+	],
+	// R2 Storage for documents
+	"r2_buckets": [
+		{
+			"binding": "DOCUMENTS",
+			"bucket_name": "knowledge-base-docs"
+		}
+	],
+	// Vectorize for semantic search
+	// Environment Variables (non-sensitive)
+	"vars": {
+		// Add non-sensitive environment variables here
+	},
+	"vectorize": [
+		{
+			"binding": "VECTORIZE",
+			"index_name": "knowledge-base-index"
+		}
+	]
 
-  // Workers AI binding
-  "ai": {
-    "binding": "AI"
-  },
-
-  // D1 Database binding
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "tool-database",
-      "database_id": "fa058509-008a-4a16-801b-74222f523d25"
-    }
-  ],
-
-  // R2 Storage for documents
-  "r2_buckets": [
-    {
-      "binding": "DOCUMENTS",
-      "bucket_name": "knowledge-base-docs"
-    }
-  ],
-
-  // Vectorize for semantic search
-  "vectorize": [
-    {
-      "binding": "VECTORIZE",
-      "index_name": "knowledge-base-index"
-    }
-  ],
-
-  // Environment Variables (non-sensitive)
-  "vars": {
-    // Add non-sensitive environment variables here
-  }
-
-  // IMPORTANT: For the OpenWeatherMap API key, use Cloudflare secrets:
-  // Run this command to add your API key securely:
-  // wrangler secret put OPENWEATHER_API_KEY
-  // Then enter your API key when prompted
 }
