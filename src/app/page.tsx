@@ -6,6 +6,7 @@ interface AIResponse {
   success: boolean;
   query: string;
   response: string;
+  toolsUsed?: string[];
   model?: string;
   error?: string;
 }
@@ -130,6 +131,22 @@ export default function Home() {
                     <p className="text-sm text-gray-500 dark:text-gray-400">Query: {result.query}</p>
                   </div>
                 </div>
+                {result.toolsUsed && result.toolsUsed.length > 0 && (
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tools Used:</span>
+                    {result.toolsUsed.map((tool, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                        </svg>
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
                   <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono">
                     {result.response}

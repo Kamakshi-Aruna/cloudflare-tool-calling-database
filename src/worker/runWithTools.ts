@@ -38,6 +38,11 @@ interface RunWithToolsConfig {
   maxIterations?: number;
 }
 
+export interface ToolUsageResult {
+  response: string;
+  toolsUsed: string[];
+}
+
 /**
  * Runs an AI model with tool calling support
  * Automatically handles the tool calling loop until the AI returns a final response
@@ -46,9 +51,10 @@ export async function runWithTools(
   ai: any, // Cloudflare AI binding
   model: string,
   config: RunWithToolsConfig
-): Promise<string> {
+): Promise<ToolUsageResult> {
   const { messages, tools, maxIterations = 5 } = config;
   const conversationHistory: Message[] = [...messages];
+  const toolsUsed = new Set<string>();
 
   // Convert tools to OpenAI function calling format
   const toolDefinitions = tools.map(tool => ({
@@ -98,6 +104,7 @@ export async function runWithTools(
         // Execute all tool calls
         for (const toolCall of response.tool_calls) {
           console.log(`[runWithTools] Executing tool: ${toolCall.name}`);
+          toolsUsed.add(toolCall.name); // Track which tool was used
 
           const tool = tools.find(t => t.name === toolCall.name);
 
@@ -149,14 +156,20 @@ export async function runWithTools(
 
       // No more tool calls - return final response
       console.log(`[runWithTools] Final response received`);
-      return response.response || lastResponse || "No response generated";
+      return {
+        response: response.response || lastResponse || "No response generated",
+        toolsUsed: Array.from(toolsUsed)
+      };
 
     } catch (error) {
       console.error(`[runWithTools] Error in iteration ${iteration}:`, error);
 
       // If we have a last response, return it
       if (lastResponse) {
-        return lastResponse;
+        return {
+          response: lastResponse,
+          toolsUsed: Array.from(toolsUsed)
+        };
       }
 
       throw error;
@@ -166,10 +179,8 @@ export async function runWithTools(
   // If we hit max iterations but have tool results, generate a summary
   console.warn(`[runWithTools] Max iterations reached. Generating summary from available data.`);
 
-  if (lastResponse) {
-    return lastResponse;
-  }
-
-  // Return a helpful error with context
-  return "I apologize, but I encountered an issue processing your request. Please try rephrasing your question or contact support if the issue persists.";
+  return {
+    response: lastResponse || "I apologize, but I encountered an issue processing your request. Please try rephrasing your question or contact support if the issue persists.",
+    toolsUsed: Array.from(toolsUsed)
+  };
 }

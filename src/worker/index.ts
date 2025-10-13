@@ -353,7 +353,8 @@ export default {
       return new Response(JSON.stringify({
         success: true,
         query: userQuery,
-        response: response,
+        response: response.response,
+        toolsUsed: response.toolsUsed,
         model: model,
       }, null, 2), {
         headers: {
