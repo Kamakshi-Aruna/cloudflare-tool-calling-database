@@ -19,7 +19,6 @@ export default function Home() {
   const exampleQueries = [
     { label: 'Show active users', query: 'Show me the list of active users' },
     { label: 'Engineering team', query: 'List all active users in Engineering department' },
-    { label: 'About JAVA', query: 'What is our java?' },
     { label: 'About CSS', query: 'What is CSS?' },
   ];
 
