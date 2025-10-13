@@ -20,6 +20,8 @@ export default function Home() {
     { label: 'Show active users', query: 'Show me the list of active users' },
     { label: 'Engineering team', query: 'List all active users in Engineering department' },
     { label: 'About CSS', query: 'What is CSS?' },
+    { label: 'Weather in London', query: 'What is the current weather in London?' },
+    { label: 'Weather in Tokyo', query: 'Tell me the weather in Tokyo, Japan' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,8 +162,9 @@ export default function Home() {
           <h3 className="font-semibold mb-2 text-blue-900 dark:text-blue-300">How it works:</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800 dark:text-blue-400">
             <li>AI analyzes your query and decides which tool to use</li>
-            <li>User queries → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">getActiveUsers</code></li>
-            <li>Document questions → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">searchKnowledgeBase</code> (searches R2 documents via Vectorize)</li>
+            <li>User queries → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">getActiveUsers</code> (D1 database)</li>
+            <li>Document questions → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">searchKnowledgeBase</code> (R2 + Vectorize)</li>
+            <li>Weather queries → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">getCurrentWeather</code> (Open-Meteo API)</li>
             <li>Tool executes and returns data to AI</li>
             <li>AI generates natural language response</li>
           </ol>

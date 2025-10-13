@@ -32,5 +32,15 @@
       "binding": "VECTORIZE",
       "index_name": "knowledge-base-index"
     }
-  ]
+  ],
+
+  // Environment Variables (non-sensitive)
+  "vars": {
+    // Add non-sensitive environment variables here
+  }
+
+  // IMPORTANT: For the OpenWeatherMap API key, use Cloudflare secrets:
+  // Run this command to add your API key securely:
+  // wrangler secret put OPENWEATHER_API_KEY
+  // Then enter your API key when prompted
 }

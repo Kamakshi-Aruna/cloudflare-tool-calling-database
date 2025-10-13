@@ -5,6 +5,7 @@ export interface Env {
   DB: any;
   DOCUMENTS: R2Bucket;
   VECTORIZE: VectorizeIndex;
+  OPENWEATHER_API_KEY: string;
 }
 
 function splitIntoChunks(text: string, chunkSize: number = 500): string[] {
@@ -164,6 +165,93 @@ async function getActiveUsers(
 }
 
 /**
+ * Get current weather for a city using OpenWeatherMap API (real-time data)
+ */
+async function getCurrentWeather(
+  { city, country }: { city: string; country?: string },
+  env?: Env
+): Promise<any> {
+  console.log(`Getting weather for: ${city}${country ? ', ' + country : ''}`);
+
+  if (!env?.OPENWEATHER_API_KEY) {
+    return {
+      error: true,
+      message: "OpenWeatherMap API key not configured. Please add OPENWEATHER_API_KEY to your environment variables."
+    };
+  }
+
+  try {
+    // Build query with optional country code
+    const query = country ? `${city},${country}` : city;
+
+    // Get current weather from OpenWeatherMap API
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(query)}&appid=${env.OPENWEATHER_API_KEY}&units=metric`;
+    const weatherResponse = await fetch(weatherUrl);
+
+    if (!weatherResponse.ok) {
+      const errorData = await weatherResponse.json() as any;
+      return {
+        error: true,
+        message: errorData.message || `City "${city}" not found. Please check the spelling or try a different city.`
+      };
+    }
+
+    const weatherData = await weatherResponse.json() as any;
+
+    // Convert Unix timestamp to ISO string
+    const timestamp = new Date(weatherData.dt * 1000).toISOString();
+    const sunrise = new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString();
+    const sunset = new Date(weatherData.sys.sunset * 1000).toLocaleTimeString();
+
+    return {
+      location: {
+        name: weatherData.name,
+        country: weatherData.sys.country,
+        coordinates: {
+          latitude: weatherData.coord.lat,
+          longitude: weatherData.coord.lon
+        },
+        timezone: weatherData.timezone
+      },
+      current: {
+        temperature: Math.round(weatherData.main.temp * 10) / 10,
+        temperature_unit: "°C",
+        feels_like: Math.round(weatherData.main.feels_like * 10) / 10,
+        temp_min: Math.round(weatherData.main.temp_min * 10) / 10,
+        temp_max: Math.round(weatherData.main.temp_max * 10) / 10,
+        humidity: weatherData.main.humidity,
+        humidity_unit: "%",
+        pressure: weatherData.main.pressure,
+        pressure_unit: "hPa",
+        visibility: weatherData.visibility / 1000, // Convert to km
+        visibility_unit: "km",
+        wind_speed: Math.round(weatherData.wind.speed * 3.6 * 10) / 10, // Convert m/s to km/h
+        wind_speed_unit: "km/h",
+        wind_direction: weatherData.wind.deg,
+        clouds: weatherData.clouds.all,
+        clouds_unit: "%",
+        description: weatherData.weather[0].description,
+        main: weatherData.weather[0].main,
+        icon: weatherData.weather[0].icon,
+        icon_url: `https://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`
+      },
+      sun: {
+        sunrise: sunrise,
+        sunset: sunset
+      },
+      timestamp: timestamp,
+      source: "OpenWeatherMap API (Real-time)"
+    };
+  } catch (error) {
+    console.error('Weather API error:', error);
+    return {
+      error: true,
+      message: `Failed to fetch weather data: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
+
+/**
  * Main Worker handler
  */
 export default {
@@ -215,29 +303,48 @@ export default {
         ],
         tools: [
           {
-            name: "searchKnowledgeBase",
-            description: "Search knowledge base",
+            name: "getCurrentWeather",
+            description: "Gets real-time weather data for a city. Use ONLY when user asks about: weather, temperature, climate, rain, sun, wind, humidity, forecast, or atmospheric conditions in any location.",
             parameters: {
               type: "object",
               properties: {
-                query: { type: "string" }
+                city: {
+                  type: "string",
+                  description: "City name (required)"
+                },
+                country: {
+                  type: "string",
+                  description: "Country name or code (optional, helps with accuracy)"
+                }
               },
-              required: ["query"]
+              required: ["city"]
             },
-            function: async (args) => searchKnowledgeBase(args, env)
+            function: async (args) => getCurrentWeather(args, env)
           },
           {
             name: "getActiveUsers",
-            description: "Get active users",
+            description: "Gets active users from database. Use ONLY for queries about users, employees, team members, or staff.",
             parameters: {
               type: "object",
               properties: {
-                limit: { type: "number" },
-                department: { type: "string" }
+                limit: { type: "number", description: "Maximum number of users to return (default: 10)" },
+                department: { type: "string", description: "Filter by department (e.g., Engineering, Marketing)" }
               },
               required: []
             },
             function: async (args) => getActiveUsers(args, env)
+          },
+          {
+            name: "searchKnowledgeBase",
+            description: "Searches company documents and knowledge base. Use ONLY for queries about policies, procedures, documentation, or company information. Do NOT use for weather or user queries.",
+            parameters: {
+              type: "object",
+              properties: {
+                query: { type: "string", description: "The search query" }
+              },
+              required: ["query"]
+            },
+            function: async (args) => searchKnowledgeBase(args, env)
           }
         ]
       });
