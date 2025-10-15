@@ -52,49 +52,23 @@ async function getCurrentWeather(
 
     const weatherData = await weatherResponse.json() as any;
 
-    // Convert Unix timestamp to ISO string
-    const timestamp = new Date(weatherData.dt * 1000).toISOString();
-    const sunrise = new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString();
-    const sunset = new Date(weatherData.sys.sunset * 1000).toLocaleTimeString();
-
     return {
       location: {
         name: weatherData.name,
-        country: weatherData.sys.country,
-        coordinates: {
-          latitude: weatherData.coord.lat,
-          longitude: weatherData.coord.lon
-        },
-        timezone: weatherData.timezone
+        country: weatherData.sys.country
       },
       current: {
         temperature: Math.round(weatherData.main.temp * 10) / 10,
         temperature_unit: "°C",
         feels_like: Math.round(weatherData.main.feels_like * 10) / 10,
-        temp_min: Math.round(weatherData.main.temp_min * 10) / 10,
-        temp_max: Math.round(weatherData.main.temp_max * 10) / 10,
         humidity: weatherData.main.humidity,
         humidity_unit: "%",
-        pressure: weatherData.main.pressure,
-        pressure_unit: "hPa",
-        visibility: weatherData.visibility / 1000, // Convert to km
+        visibility: weatherData.visibility / 1000,
         visibility_unit: "km",
-        wind_speed: Math.round(weatherData.wind.speed * 3.6 * 10) / 10, // Convert m/s to km/h
+        wind_speed: Math.round(weatherData.wind.speed * 3.6 * 10) / 10,
         wind_speed_unit: "km/h",
-        wind_direction: weatherData.wind.deg,
-        clouds: weatherData.clouds.all,
-        clouds_unit: "%",
-        description: weatherData.weather[0].description,
-        main: weatherData.weather[0].main,
-        icon: weatherData.weather[0].icon,
-        icon_url: `https://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`
-      },
-      sun: {
-        sunrise: sunrise,
-        sunset: sunset
-      },
-      timestamp: timestamp,
-      source: "OpenWeatherMap API (Real-time)"
+        description: weatherData.weather[0].description
+      }
     };
   } catch (error) {
     console.error('Weather API error:', error);
