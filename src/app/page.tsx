@@ -18,8 +18,8 @@ export default function Home() {
   const [workerUrl, setWorkerUrl] = useState('https://cloudflare-ai-toolcalling.search-engine.workers.dev');
 
   const exampleQueries = [
-    { label: 'Weather in Bangalore', query: 'What is the current weather in London?' },
-    { label: 'Weather in Chittoor', query: 'Tell me the weather in Tokyo, Japan' },
+    { label: 'Weather in Bangalore', query: 'What is the current weather in Bangalore?' },
+    { label: 'Weather in Chittoor', query: 'Tell me the weather in Chittoor' },
     { label: 'Weather in New York', query: 'How is the weather in New York?' },
   ];
 
