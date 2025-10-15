@@ -18,11 +18,9 @@ export default function Home() {
   const [workerUrl, setWorkerUrl] = useState('https://cloudflare-ai-toolcalling.search-engine.workers.dev');
 
   const exampleQueries = [
-    { label: 'Weather in London', query: 'What is the current weather in London?' },
-    { label: 'Weather in Tokyo', query: 'Tell me the weather in Tokyo, Japan' },
+    { label: 'Weather in Bangalore', query: 'What is the current weather in London?' },
+    { label: 'Weather in Chittoor', query: 'Tell me the weather in Tokyo, Japan' },
     { label: 'Weather in New York', query: 'How is the weather in New York?' },
-    { label: 'Weather in Paris', query: 'What is the temperature in Paris, France?' },
-    { label: 'Weather in Sydney', query: 'Tell me about the weather in Sydney, Australia' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
