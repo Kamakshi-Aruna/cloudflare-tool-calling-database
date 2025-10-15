@@ -18,11 +18,11 @@ export default function Home() {
   const [workerUrl, setWorkerUrl] = useState('https://cloudflare-ai-toolcalling.search-engine.workers.dev');
 
   const exampleQueries = [
-    { label: 'Show active users', query: 'Show me the list of active users' },
-    { label: 'Engineering team', query: 'List all active users in Engineering department' },
-    { label: 'About CSS', query: 'What is CSS?' },
     { label: 'Weather in London', query: 'What is the current weather in London?' },
     { label: 'Weather in Tokyo', query: 'Tell me the weather in Tokyo, Japan' },
+    { label: 'Weather in New York', query: 'How is the weather in New York?' },
+    { label: 'Weather in Paris', query: 'What is the temperature in Paris, France?' },
+    { label: 'Weather in Sydney', query: 'Tell me about the weather in Sydney, Australia' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,8 +58,11 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-            Cloudflare Workers AI
+            Cloudflare Workers AI Weather
           </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            AI-powered weather assistant using Cloudflare Workers AI + Secrets Store
+          </p>
         </div>
 
 
@@ -74,7 +77,7 @@ export default function Home() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search..."
+                placeholder="Ask about the weather in any city..."
                 className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 disabled={loading}
               />
@@ -178,18 +181,18 @@ export default function Home() {
         <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
           <h3 className="font-semibold mb-2 text-blue-900 dark:text-blue-300">How it works:</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800 dark:text-blue-400">
-            <li>AI analyzes your query and decides which tool to use</li>
-            <li>User queries → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">getActiveUsers</code> (D1 database)</li>
-            <li>Document questions → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">searchKnowledgeBase</code> (R2 + Vectorize)</li>
-            <li>Weather queries → calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">getCurrentWeather</code> (Open-Meteo API)</li>
-            <li>Tool executes and returns data to AI</li>
-            <li>AI generates natural language response</li>
+            <li>AI analyzes your weather query</li>
+            <li>Calls <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">getCurrentWeather</code> tool with city information</li>
+            <li>Retrieves API key from Cloudflare Secrets Store securely</li>
+            <li>Fetches real-time weather data from OpenWeatherMap API</li>
+            <li>AI generates a natural language response with weather details</li>
           </ol>
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Built with Cloudflare Workers AI + Next.js</p>
+          <p>Built with Cloudflare Workers AI + Secrets Store + Next.js</p>
+          <p className="mt-1">Powered by OpenWeatherMap API</p>
         </div>
       </div>
     </div>

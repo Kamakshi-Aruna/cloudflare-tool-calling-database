@@ -2,36 +2,17 @@
 	// Cloudflare Workers configuration (JSON with Comments format)
 	"name": "cloudflare-ai-toolcalling",
 	"main": "src/worker/index.ts",
-	"compatibility_date": "2024-01-01",
+	"compatibility_date": "2024-04-03",
 	// Workers AI binding
 	"ai": {
 		"binding": "AI"
 	},
-	// D1 Database binding
-	"d1_databases": [
+	// Secrets Store binding
+	"secrets_store_secrets": [
 		{
-			"binding": "DB",
-			"database_name": "tool-database",
-			"database_id": "fa058509-008a-4a16-801b-74222f523d25"
-		}
-	],
-	// R2 Storage for documents
-	"r2_buckets": [
-		{
-			"binding": "DOCUMENTS",
-			"bucket_name": "knowledge-base-docs"
-		}
-	],
-	// Vectorize for semantic search
-	// Environment Variables (non-sensitive)
-	"vars": {
-		// Add non-sensitive environment variables here
-	},
-	"vectorize": [
-		{
-			"binding": "VECTORIZE",
-			"index_name": "knowledge-base-index"
+			"binding": "WEATHER_API_KEY",
+			"store_id": "9974beb562754740ab2e089e3995f4fe",
+			"secret_name": "WEATHER_API_KEY"
 		}
 	]
-
 }

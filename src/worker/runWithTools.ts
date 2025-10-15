@@ -75,16 +75,12 @@ export async function runWithTools(
   while (iteration < maxIterations) {
     iteration++;
 
-    console.log(`[runWithTools] Iteration ${iteration}/${maxIterations}`);
-
     try {
       // Make AI request
       const response = await ai.run(model, {
         messages: conversationHistory,
         tools: toolDefinitions,
       }) as AIResponse;
-
-      console.log(`[runWithTools] Response:`, JSON.stringify(response, null, 2));
 
       // Store response for fallback
       if (response.response) {
@@ -93,8 +89,6 @@ export async function runWithTools(
 
       // Check if AI wants to call tools
       if (response.tool_calls && response.tool_calls.length > 0) {
-        console.log(`[runWithTools] AI wants to call ${response.tool_calls.length} tool(s)`);
-
         // Add assistant's tool call request to history
         conversationHistory.push({
           role: "assistant",
@@ -103,7 +97,6 @@ export async function runWithTools(
 
         // Execute all tool calls
         for (const toolCall of response.tool_calls) {
-          console.log(`[runWithTools] Executing tool: ${toolCall.name}`);
           toolsUsed.add(toolCall.name); // Track which tool was used
 
           const tool = tools.find(t => t.name === toolCall.name);
@@ -125,9 +118,29 @@ export async function runWithTools(
           try {
             // Execute the tool function
             const result = await tool.function(toolCall.arguments);
-            const resultString = typeof result === "string" ? result : JSON.stringify(result);
 
-            console.log(`[runWithTools] Tool result:`, resultString.substring(0, 200));
+            // Check if result is an error
+            if (result && result.error) {
+              return {
+                response: result.message || "An error occurred while fetching the data.",
+                toolsUsed: Array.from(toolsUsed)
+              };
+            }
+
+            // Format weather result into human-readable response
+            if (toolCall.name === "getCurrentWeather" && result && result.location && result.current) {
+              const loc = result.location;
+              const curr = result.current;
+              const humanResponse = `The current weather in ${loc.name}, ${loc.country} is ${curr.description} with a temperature of ${curr.temperature}${curr.temperature_unit}. It feels like ${curr.feels_like}${curr.temperature_unit}. The humidity is ${curr.humidity}${curr.humidity_unit}, wind speed is ${curr.wind_speed} ${curr.wind_speed_unit}, and visibility is ${curr.visibility} ${curr.visibility_unit}.`;
+
+              // Return immediately with the formatted response
+              return {
+                response: humanResponse,
+                toolsUsed: Array.from(toolsUsed)
+              };
+            }
+
+            const resultString = typeof result === "string" ? result : JSON.stringify(result);
 
             // Add tool result to conversation history
             conversationHistory.push({
@@ -155,7 +168,6 @@ export async function runWithTools(
       }
 
       // No more tool calls - return final response
-      console.log(`[runWithTools] Final response received`);
       return {
         response: response.response || lastResponse || "No response generated",
         toolsUsed: Array.from(toolsUsed)
